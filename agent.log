@@ -1,0 +1,29 @@
+nohup: ignoring input
+2025-11-19 14:49:45,918 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-11-19 14:49:45,925 - apscheduler.scheduler - INFO - Added job "Agent._scheduled_run" to job store "default"
+2025-11-19 14:49:45,925 - apscheduler.scheduler - INFO - Scheduler started
+2025-11-19 14:49:45,925 - agentic.agent - INFO - Scheduler started. Interval: 60m, Max: 24
+2025-11-19 14:49:45,925 - agentic.agent - INFO - Running agent immediately (first run)...
+2025-11-19 14:49:45,925 - agentic.agent - INFO - 
+================================================================================
+2025-11-19 14:49:45,925 - agentic.agent - INFO - [SCHEDULED RUN #1] 2025-11-19 14:49:45
+2025-11-19 14:49:45,925 - agentic.agent - INFO - ================================================================================
+2025-11-19 14:49:45,925 - agentic.agent - INFO - Starting run d941c71d-1b03-458a-b61f-cb703658cc9b
+2025-11-19 14:49:46,429 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-19 14:49:46,439 - agentic.agent - INFO - Detected: OrderSerializer does not handle None items in order object
+2025-11-19 14:49:46,439 - agentic.agent - INFO - Policy decision: {'summary': 'OrderSerializer does not handle None items in order object', 'location': 'file.py', 'score': 85, 'detection': {'issue_id': 'ISSUE-1', 'score': 85, 'classification': 'bug', 'location': 'file.py', 'description': 'OrderSerializer does not handle None items in order object'}}
+2025-11-19 14:49:47,227 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-19 14:49:47,229 - agentic.brain - ERROR - JSON decode error: Expecting ',' delimiter: line 7 column 28 (char 193)
+2025-11-19 14:49:47,229 - agentic.agent - INFO - Plan generated. Files: 1
+2025-11-19 14:49:47,229 - agentic.agent - INFO - Plan explanation: Improve: OrderSerializer does not handle None items in order object
+2025-11-19 14:49:47,229 - agentic.agent - INFO -   Step 1: Apply improvements
+2025-11-19 14:49:49,222 - agentic.tools - INFO - Using base branch: master, SHA: f0f3261e55277bfad7e9292fab445f4881a6f8db
+2025-11-19 14:49:49,957 - agentic.tools - INFO - Branch created or exists: agent/d941c71d-1b03-458a-b61f-cb703658cc9b
+2025-11-19 14:49:49,958 - agentic.tools - INFO - Files to commit: 1 files
+2025-11-19 14:49:49,958 - agentic.tools - INFO -   - file.py: 295 bytes
+2025-11-19 14:49:51,538 - agentic.tools - INFO - Successfully committed: file.py
+2025-11-19 14:49:53,122 - agentic.agent - INFO - Run d941c71d-1b03-458a-b61f-cb703658cc9b completed. PR: https://github.com/shreyas7ss/testrepo/pull/17 (#17)
+2025-11-19 14:49:53,122 - agentic.agent - INFO - Validation passed: True
+2025-11-19 14:49:53,122 - agentic.agent - INFO - Risk score: 30
+2025-11-19 14:49:53,122 - agentic.agent - INFO - [RUN #1 SUCCESS]
+2025-11-19 14:49:53,122 - agentic.agent - INFO -   PR: None - None

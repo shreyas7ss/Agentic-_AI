@@ -111,18 +111,40 @@ def create_pr(repo, base_branch, head_branch, title, body, files=None, labels=No
         "head": head_branch,
         "base": base_branch
     }
-    
+
+    # If a PR already exists from this head to the base, return it instead of creating a duplicate
+    try:
+        existing_prs_url = f"{api_base}/pulls"
+        params = {"state": "open", "head": f"{owner}:{head_branch}", "base": base_branch}
+        existing = requests.get(existing_prs_url, headers=headers, params=params)
+        if existing.status_code == 200:
+            items = existing.json()
+            if items:
+                pr_info = items[0]
+                LOG.info(f"Found existing open PR: {pr_info.get('html_url')}")
+                return {
+                    "status": "ok",
+                    "pr_number": pr_info.get("number"),
+                    "url": pr_info.get("html_url"),
+                    "head_branch": head_branch,
+                    "existing": True
+                }
+    except Exception:
+        # Non-fatal — proceed to create PR
+        pass
+
     resp = requests.post(pr_url, headers=headers, json=pr_data)
     if resp.status_code != 201:
         LOG.error(f"PR creation failed: {resp.text}")
-        return {"status": "error", "reason": "pr_creation_failed"}
-    
+        return {"status": "error", "reason": "pr_creation_failed", "details": resp.text}
+
     pr_info = resp.json()
     return {
         "status": "ok",
         "pr_number": pr_info["number"],
         "url": pr_info["html_url"],
-        "head_branch": head_branch
+        "head_branch": head_branch,
+        "existing": False
     }
 
 

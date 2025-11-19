@@ -78,14 +78,21 @@ class Agent:
         # Detect issues
         detection = self.reasoner.detect_issues(state)
         LOG.info(f"Detected: {detection.get('description')}")
-        
+
         # Apply policy
         decision = self.policy.apply([detection], {})[0] if detection else None
         LOG.info(f"Policy decision: {decision}")
-        
+
         # Generate plan
         plan = self.planner.generate(decision, state)
         LOG.info(f"Plan generated. Files: {len(plan.get('files', []))}")
+
+        # Log plan explanation and steps for visibility
+        plan_explanation = plan.get('explanation') or plan.get('goal') or 'No explanation provided.'
+        LOG.info(f"Plan explanation: {plan_explanation}")
+        steps = plan.get('steps', []) or []
+        for idx, step in enumerate(steps, start=1):
+            LOG.info(f"  Step {idx}: {step.get('description', '')}")
         
         # HITL check (optional)
         if plan.get("estimated_risk_score", 0) > 70:
@@ -94,10 +101,14 @@ class Agent:
                 return {"run_id": run_id, "status": "rejected_by_hitl"}
         
         # Create PR
+        # Use a single branch for agent commits (configurable via AGENT_BRANCH)
+        head_branch = os.getenv("AGENT_BRANCH", "Agent")
+        LOG.info(f"Using head branch: {head_branch}")
+
         pr_info = create_pr(
             repo=os.getenv("GITHUB_REPO", "shreyas7ss/testrepo"),
             base_branch=os.getenv("GITHUB_BASE_BRANCH", "main"),
-            head_branch=f"agent/{run_id}",
+            head_branch=head_branch,
             title=f"Auto-fix: {plan.get('goal', 'improvement')}",
             body=self._build_pr_body(run_id, plan),
             files=plan.get("files", [])
@@ -105,7 +116,17 @@ class Agent:
         
         # Validation
         validation = {"passed": pr_info.get("status") == "ok"}
-        
+
+        # Build insights / results for this run (for easier visibility and UI use)
+        insights = {
+            "detection_summary": detection,
+            "plan_explanation": plan_explanation,
+            "steps": steps,
+            "risk_score": plan.get('estimated_risk_score'),
+            "pr": pr_info,
+            "validation": validation
+        }
+
         # Store in memory
         self.episodic.append({
             "run_id": run_id,
@@ -114,10 +135,16 @@ class Agent:
             "plan": plan,
             "pr": pr_info,
             "validation": validation,
+            "insights": insights,
             "timestamp": datetime.now().isoformat()
         })
-        
-        return {"run_id": run_id, "pr": pr_info, "validation": validation}
+
+        # Log concise run summary / insights for users
+        LOG.info(f"Run {run_id} completed. PR: {pr_info.get('url')} (#{pr_info.get('pr_number')})")
+        LOG.info(f"Validation passed: {validation.get('passed')}")
+        LOG.info(f"Risk score: {insights.get('risk_score')}")
+
+        return {"run_id": run_id, "insights": insights}
     
     def _build_pr_body(self, run_id, plan):
         """Build detailed PR description"""
@@ -239,9 +266,53 @@ Examples:
         print(f"\n{'='*80}")
         print("SINGLE RUN MODE")
         print(f"{'='*80}\n")
-        
+
         result = agent.run_once()
-        print(f"\nRun result: {result}")
+
+        # Pretty-print results/insights for readability
+        insights = result.get('insights', {})
+
+        def _print_insights(run_id, data):
+            print(f"Run ID: {run_id}\n")
+
+            detection = data.get('detection_summary') or {}
+            print("Detection:")
+            print(f"  - Issue ID: {detection.get('issue_id', 'N/A')}")
+            print(f"  - Description: {detection.get('description', 'N/A')}")
+            print(f"  - Classification: {detection.get('classification', 'N/A')}")
+            print(f"  - Score: {detection.get('score', 'N/A')}\n")
+
+            print("Plan Explanation:")
+            print(f"  {data.get('plan_explanation', 'N/A')}\n")
+
+            steps = data.get('steps', [])
+            if steps:
+                print("Steps:")
+                for i, s in enumerate(steps, start=1):
+                    desc = s.get('description', '')
+                    print(f"  {i}. {desc}")
+                    code = s.get('refactored_code') or s.get('patch')
+                    if code:
+                        # show a short preview of the code block (first 10 lines)
+                        preview = '\n'.join(code.splitlines()[:10])
+                        print("    Code preview:")
+                        for line in preview.splitlines():
+                            print(f"      {line}")
+                        if len(code.splitlines()) > 10:
+                            print("      ... (truncated) ...")
+                print("")
+            else:
+                print("No steps generated.\n")
+
+            print(f"Risk score: {data.get('risk_score', 'N/A')}")
+
+            pr = data.get('pr') or {}
+            print("\nPull Request:")
+            print(f"  - URL: {pr.get('url', 'N/A')}")
+            print(f"  - PR Number: {pr.get('pr_number', 'N/A')}")
+            print(f"\nValidation passed: {data.get('validation', {}).get('passed', False)}")
+
+        _print_insights(result.get('run_id'), insights)
 
 
 if __name__ == "__main__":
