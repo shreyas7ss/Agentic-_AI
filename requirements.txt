@@ -1,0 +1,8 @@
+# Optional extras for full implementation
+# Groq LLM integration
+# pip install -r Agentic_AI\requirements.txt
+
+requests
+groq>=0.9.0
+python-dotenv>=1.0.0
+apscheduler>=3.10.0
